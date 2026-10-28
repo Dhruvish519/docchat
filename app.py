@@ -3,8 +3,11 @@
 Run with:  streamlit run app.py
 """
 
+import html
 import os
+import re
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 import pymupdf
@@ -18,6 +21,8 @@ from rag.vector_store import VectorStore
 MODELS = ["gemini-3.6-flash", "gemini-3.1-flash-lite", "gemini-2.5-flash"]
 
 st.set_page_config(page_title="DocChat", page_icon="📄", layout="wide")
+st.markdown(f"<style>{(Path(__file__).parent / 'assets' / 'style.css').read_text()}</style>",
+            unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------- helpers
@@ -63,15 +68,29 @@ def chat_as_markdown(messages) -> str:
     return "\n".join(lines)
 
 
+def with_citations(text: str) -> str:
+    """Render the model's [1], [2] citation markers as highlighted chips."""
+    safe = text.replace("<", "&lt;")      # model output is never treated as HTML
+    return re.sub(r"\[(\d{1,2})\]", r'<span class="cite">\1</span>', safe)
+
+
+def hero(tagline: str):
+    st.markdown(f'<div class="dc-hero"><h1 class="dc-wordmark"><span class="dc-swipe">DocChat</span></h1>'
+                f'<p class="dc-tagline">{tagline}</p></div>', unsafe_allow_html=True)
+
+
 def show_sources(sources):
     if not sources:
         return
     with st.expander(f"📚 Sources ({len(sources)})"):
         for i, s in enumerate(sources, start=1):
-            st.markdown(f"**[{i}] {s['file_name']} — page {s['page']}** "
-                        f"<span style='color:gray'>· similarity {s['score']:.2f}</span>",
-                        unsafe_allow_html=True)
-            st.caption(s["text"][:500] + ("…" if len(s["text"]) > 500 else ""))
+            quote = html.escape(s["text"][:500] + ("…" if len(s["text"]) > 500 else ""))
+            st.markdown(
+                f'<div class="dc-source"><div class="dc-source-head">'
+                f'<span class="cite">{i}</span><b>{html.escape(s["file_name"])}</b>'
+                f'<span class="dc-page">page {s["page"]}</span>'
+                f'<span class="dc-score">similarity {s["score"]:.2f}</span></div>'
+                f'<p class="dc-quote">{quote}</p></div>', unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------- state
@@ -82,13 +101,15 @@ ss.setdefault("pending_question", None)
 
 # ---------------------------------------------------------------- sidebar
 with st.sidebar:
-    st.title("📄 DocChat")
-    st.caption("Chat with your PDFs · RAG + Gemini")
+    st.markdown('<p class="dc-side-mark"><span class="dc-swipe-sm">DocChat</span></p>'
+                '<p class="dc-side-sub">Chat with your PDFs, powered by RAG and Gemini</p>',
+                unsafe_allow_html=True)
 
     server_key = secret("GEMINI_API_KEY")
     if server_key:
         # Never put the server's key into a widget: visitors could reveal it.
-        st.success("🔑 Using the app's built-in API key", icon="✅")
+        st.markdown('<div class="dc-keyok">🔑 Using the app\'s built-in API key</div>',
+                    unsafe_allow_html=True)
         own_key = st.text_input("Use your own key instead (optional)", type="password")
         api_key = own_key or server_key
     else:
@@ -114,7 +135,7 @@ with st.sidebar:
                        width="stretch", disabled=not ss.messages)
 
 if not api_key:
-    st.title("📄 DocChat")
+    hero("Ask questions about your PDFs and get answers that point back to the page they came from.")
     st.info("👈 Enter your **Gemini API key** in the sidebar to start. "
             "You can get one for free at [Google AI Studio](https://aistudio.google.com/apikey).")
     st.stop()
@@ -122,7 +143,7 @@ if not api_key:
 client = get_client(api_key, model)
 
 # ---------------------------------------------------------------- upload + indexing
-st.title("📄 DocChat")
+hero("Ask questions about your PDFs and get answers that point back to the page they came from.")
 uploads = st.file_uploader("Upload one or more PDFs", type="pdf", accept_multiple_files=True)
 
 current_names = {f.name for f in uploads or []}
@@ -160,14 +181,13 @@ for f in uploads or []:
                             + (" (from cache)" if cached else ""), state="complete")
 
 if not ss.docs:
-    st.markdown("""
-#### How it works
-1. **Upload** PDFs — each page is split into overlapping text *chunks*.
-2. Each chunk is turned into an **embedding** (a vector of numbers that captures meaning) with Gemini.
-3. Embeddings go into a **FAISS** vector index.
-4. When you ask a question, the most similar chunks are **retrieved** and given to the **Gemini LLM**,
-   which writes an answer **grounded in your documents**, with page citations.
-""")
+    st.markdown("""<h4 style="margin-top:2rem">How it works</h4>
+<ol class="dc-steps">
+<li><b>Upload</b><p>Each page is split into small, overlapping chunks of text.</p></li>
+<li><b>Embed</b><p>Gemini turns every chunk into an embedding: a vector that captures its meaning.</p></li>
+<li><b>Index</b><p>The embeddings go into a FAISS vector index for fast similarity search.</p></li>
+<li><b>Answer</b><p>Your question pulls up the closest chunks, and Gemini answers from them with page citations.</p></li>
+</ol>""", unsafe_allow_html=True)
     st.stop()
 
 # ---------------------------------------------------------------- vector store
@@ -209,14 +229,17 @@ with tab_docs:
 with tab_chat:
     for m in ss.messages:
         with st.chat_message(m["role"]):
-            st.markdown(m["content"])
+            if m["role"] == "assistant":
+                st.markdown(with_citations(m["content"]), unsafe_allow_html=True)
+            else:
+                st.markdown(m["content"])
             if m["role"] == "assistant":
                 show_sources(m.get("sources"))
 
     if not ss.messages:
         suggestions = [q for n in selected for q in (ss.docs[n].get("summary") or {}).get("questions", [])][:4]
         if suggestions:
-            st.caption("Try asking:")
+            st.markdown("**Try asking**")
             cols = st.columns(len(suggestions))
             for col, q in zip(cols, suggestions):
                 if col.button(q, width="stretch"):
@@ -241,7 +264,10 @@ if question:
                         st.caption(f"🔎 Searching for: *{search_q}*")
                 with st.spinner("Searching your documents…"):
                     results = pipeline.retrieve(client, store, search_q, top_k)
-                answer = st.write_stream(pipeline.answer_stream(client, search_q, results, temperature))
+                slot = st.empty()
+                with slot:
+                    answer = st.write_stream(pipeline.answer_stream(client, search_q, results, temperature))
+                slot.markdown(with_citations(answer), unsafe_allow_html=True)
             except errors.APIError as e:
                 st.error(friendly_error(e))
                 st.stop()

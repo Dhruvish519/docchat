@@ -1,0 +1,205 @@
+/* DocChat visual theme: "ink on paper, with a highlighter".
+   Fonts: Literata (headings, built for on-screen reading) + Atkinson Hyperlegible (body). */
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Literata:opsz,wght@7..72,500;7..72,700&display=swap');
+
+:root {
+  --paper: #FAFBFD;
+  --paper-2: #EEF1F7;
+  --ink: #1B2559;
+  --ink-soft: #5B6485;
+  --rule: #DCE1EC;
+  --blue: #2F4BC7;
+  --mark: #FFE36E;
+  --mark-soft: #FFF4B8;
+}
+
+/* ---------- type ---------- */
+/* Body and heading fonts are set in .streamlit/config.toml (font / headingFont),
+   which keeps Streamlit's own icon font intact. */
+.stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.stMarkdown p, .stMarkdown li { line-height: 1.6; }
+
+/* ---------- layout ---------- */
+.block-container { max-width: 1040px; padding-top: 2.2rem; }
+
+/* ---------- hero ---------- */
+.dc-hero { margin: 0 0 1.4rem; }
+.dc-wordmark {
+  font-family: 'Literata', Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(2.4rem, 5vw, 3.4rem);
+  line-height: 1.05;
+  color: var(--ink);
+  margin: 0;
+  padding: 0;
+}
+.dc-swipe {
+  /* the highlighter swipe */
+  background: linear-gradient(100deg, transparent 0 1%, var(--mark) 2% 97%, transparent 98%) no-repeat;
+  background-size: 100% 42%;
+  background-position: 0 82%;
+  padding: 0 0.05em;
+}
+.stMarkdown p.dc-tagline {
+  margin: 0.6rem 0 0;
+  font-size: 1.08rem;
+  color: var(--ink-soft);
+  max-width: 34em;
+}
+
+/* ---------- how-it-works steps (a real sequence, so numbered) ---------- */
+.dc-steps {
+  list-style: none;
+  counter-reset: step;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin: 1.6rem 0 0;
+  padding: 0;
+  border-top: 2px solid var(--ink);
+}
+.dc-steps li {
+  counter-increment: step;
+  padding: 1rem 1.1rem 0 0;
+  margin: 0;
+}
+.dc-steps li::before {
+  content: counter(step);
+  display: inline-block;
+  font-family: 'Literata', Georgia, serif;
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--blue);
+  margin-bottom: 0.3rem;
+}
+.dc-steps b { display: block; color: var(--ink); font-size: 1.02rem; margin-bottom: 0.25rem; }
+.dc-steps p { margin: 0; color: var(--ink-soft); font-size: 0.94rem; line-height: 1.5; }
+@media (max-width: 760px) {
+  .dc-steps { grid-template-columns: 1fr 1fr; row-gap: 0.8rem; }
+}
+
+/* ---------- file uploader ---------- */
+[data-testid="stFileUploaderDropzone"] {
+  background: #fff;
+  border: 1.5px dashed #AEB7D3;
+  border-radius: 10px;
+}
+[data-testid="stFileUploaderDropzone"]:hover { border-color: var(--blue); }
+
+/* ---------- stats strip ---------- */
+[data-testid="stMetric"] {
+  border-left: 3px solid var(--mark);
+  padding: 0.1rem 0 0.1rem 0.8rem;
+}
+[data-testid="stMetricLabel"] p { color: var(--ink-soft); font-size: 0.85rem; }
+[data-testid="stMetricValue"] {
+  font-family: 'Literata', Georgia, serif;
+  color: var(--ink);
+  font-size: 1.9rem;
+}
+
+/* ---------- tabs ---------- */
+.stTabs [data-baseweb="tab-list"] { gap: 1.4rem; border-bottom: 1px solid var(--rule); }
+.stTabs [data-baseweb="tab"] { padding-left: 0; padding-right: 0; }
+.stTabs [data-baseweb="tab"] p { font-size: 1rem; }
+
+/* ---------- chat ---------- */
+[data-testid="stChatMessage"] {
+  background: transparent;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+}
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) .stMarkdown p {
+  font-weight: 700;
+  color: var(--ink);
+}
+[data-testid="stChatMessageAvatarUser"] { background: var(--ink); }
+[data-testid="stChatMessageAvatarAssistant"] { background: var(--mark); color: var(--ink); }
+
+/* citation chips: [1] -> highlighted number */
+.cite {
+  display: inline-block;
+  min-width: 1.25em;
+  padding: 0 0.32em;
+  margin: 0 0.08em;
+  border-radius: 4px;
+  background: var(--mark);
+  color: var(--ink);
+  font-size: 0.78em;
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+  vertical-align: 0.12em;
+}
+
+/* suggested questions */
+.stButton > button {
+  border-radius: 8px;
+  border: 1px solid var(--rule);
+  background: #fff;
+  color: var(--ink);
+}
+.stButton > button:hover { border-color: var(--blue); color: var(--blue); }
+.stButton > button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+/* sources */
+[data-testid="stExpander"] details {
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: #fff;
+}
+.dc-source { margin: 0.2rem 0 0.9rem; }
+.dc-source-head { display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; }
+.dc-page {
+  background: var(--mark-soft);
+  border-radius: 4px;
+  padding: 0 0.4em;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+.dc-score { color: var(--ink-soft); font-size: 0.8rem; }
+.dc-quote {
+  margin: 0.35rem 0 0;
+  padding-left: 0.8rem;
+  border-left: 2px solid var(--rule);
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* chat input */
+[data-testid="stChatInput"] { border-radius: 10px; }
+[data-testid="stChatInput"]:focus-within { border-color: var(--blue); }
+
+/* ---------- sidebar ---------- */
+[data-testid="stSidebar"] { border-right: 1px solid var(--rule); }
+.stMarkdown p.dc-side-mark {
+  font-family: 'Literata', Georgia, serif;
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--ink);
+  margin: 0;
+}
+.dc-swipe-sm {
+  background: linear-gradient(var(--mark), var(--mark)) no-repeat 0 85% / 100% 40%;
+}
+.stMarkdown p.dc-side-sub { color: var(--ink-soft); font-size: 0.88rem; margin: 0.2rem 0 1rem; }
+.dc-keyok {
+  display: flex; gap: 0.5rem; align-items: center;
+  background: #fff;
+  border: 1px solid var(--rule);
+  border-left: 3px solid #2E9E6A;
+  border-radius: 6px;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.9rem;
+  color: var(--ink);
+  margin-bottom: 0.8rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

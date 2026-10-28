@@ -1,5 +1,12 @@
 [theme]
-primaryColor = "#4F6BED"
+base = "light"
+primaryColor = "#2F4BC7"
+backgroundColor = "#FAFBFD"
+secondaryBackgroundColor = "#EEF1F7"
+textColor = "#1B2559"
+font = "Atkinson Hyperlegible:https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap"
+headingFont = "Literata:https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,700&display=swap"
+baseRadius = "medium"
 
 [server]
 maxUploadSize = 50
